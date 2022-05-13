@@ -4,6 +4,9 @@
 *.dll
 *.so
 *.dylib
+main
+main.zip
+.envrc
 
 # Test binary, built with `go test -c`
 *.test
