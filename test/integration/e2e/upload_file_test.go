@@ -46,7 +46,7 @@ func TestUploadFile(t *testing.T) {
 
 	assert.Nil(t, err, "error deserializing message from topic")
 
-	expected := s3FileCreatedUpdated(content, key, val.Metadata.Tracking_id, bucket)
+	expected := s3FileCreatedUpdated(content, key, val.Metadata.Tracking_uuid, bucket)
 	assert.Equal(t, expected, val)
 }
 
@@ -72,17 +72,17 @@ func s3Client(t *testing.T) *s3.Client {
 func s3FileCreatedUpdated(content string, key string, trackingId string, bucket string) avro.S3FileCreatedUpdated {
 	expected := avro.NewS3FileCreatedUpdated()
 	payload := avro.NewS3FileCreatedUpdatedPayload()
-	payload.Aws_region = "us-east-1"
+	payload.Aws_region = "eu-west-1"
 	payload.Bucket_name = bucket
 	payload.Content_length = int64(len(content))
 	payload.Content_type = "csv"
 	payload.Key = key
-	payload.Operation_type = bucket
+	payload.Operation_type = "organization_operation"
 	expected.Payload = payload
 	metadata := avro.NewS3FileCreatedUpdatedMetadata()
 	metadata.Origin_application = "s3"
-	metadata.Region = "us-east-1"
-	metadata.Tracking_id = trackingId
+	metadata.Region = "eu-west-1"
+	metadata.Tracking_uuid = trackingId
 	expected.Metadata = metadata
 
 	return expected

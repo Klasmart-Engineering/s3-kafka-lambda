@@ -31,7 +31,7 @@ services:
     environment:
         - SERVICES=s3,lambda
         - LAMBDA_EXECUTOR=docker
-        - DEFAULT_REGION=us-east-1
+        - DEFAULT_REGION=eu-west-1
     ports:
         - 4566:4566
     volumes:

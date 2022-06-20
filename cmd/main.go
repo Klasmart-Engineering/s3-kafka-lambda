@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/binary"
+	"encoding/json"
 	"fmt"
 	"log"
 	"os"
@@ -26,6 +27,16 @@ func handler(ctx context.Context, s3Event events.S3Event) {
 		panic("Failed to initialize logger")
 	}
 	topicName := os.Getenv("TOPIC_NAME")
+	var operations map[string]interface{}
+	err = json.Unmarshal([]byte(os.Getenv("OPERATIONS")), &operations)
+	if err != nil {
+		logger.Errorf("Failed to retrieve operation mappings - %v", err)
+		panic("Failed to retrieve operation mappings")
+	}
+	if len(operations) == 0 {
+		logger.Errorf("No operation mappings")
+		panic("No operation mappings")
+	}
 	schemaIDBytes, err := schemaIdBytes(topicName)
 	if err != nil {
 		logger.Errorf("Failed to get schema - %v", err)
@@ -39,10 +50,7 @@ func handler(ctx context.Context, s3Event events.S3Event) {
 	}
 
 	var messages []kafka.Message
-	for _, record := range s3Event.Records {
-		message := message(record)
-		messages = append(messages, kafkaMessage(message, schemaIDBytes))
-	}
+	messages = mapToMessages(s3Event, operations, schemaIDBytes, messages, logger)
 
 	err = writer.WriteMessages(
 		context.Background(),
@@ -56,21 +64,46 @@ func handler(ctx context.Context, s3Event events.S3Event) {
 	}
 }
 
+func mapToMessages(s3Event events.S3Event, operations map[string]interface{}, schemaIDBytes []byte, messages []kafka.Message, logger *zap.SugaredLogger) []kafka.Message {
+	for _, record := range s3Event.Records {
+		op := operations[record.S3.Bucket.Name]
+		if op == nil {
+			logger.Errorf("Failed to get operation and skipping for %v", record.S3.Object.Key)
+			continue
+		}
+		if _, ok := op.(string); ok {
+			operation := op.(interface{}).(string)
+			message := message(record, operation)
+			kafkaMessage, err := kafkaMessage(message, schemaIDBytes)
+			if err != nil {
+				logger.Errorf("Failed to serialize to kafka message for %v - %v", record.S3.Object.Key, err)
+				continue
+			}
+			messages = append(messages, kafkaMessage)
+		} else {
+			logger.Errorf("Skipping for %v as operation mapping value is not string", record.S3.Object.Key)
+		}
+	}
+	return messages
+}
+
 func newLogger() (*zap.SugaredLogger, error) {
 	logger, err := zap.NewProduction()
 	if err != nil {
 		return nil, err
 	}
-	defer logger.Sync()
+	defer func(logger *zap.Logger) {
+		logger.Sync()
+	}(logger)
 	sugar := logger.Sugar()
 	return sugar, nil
 }
 
-func message(record events.S3EventRecord) avro.S3FileCreatedUpdated {
+func message(record events.S3EventRecord, operation string) avro.S3FileCreatedUpdated {
 	s3 := record.S3
 	metadata := avro.NewS3FileCreatedUpdatedMetadata()
 	metadata.Origin_application = "s3"
-	metadata.Tracking_id = uuid.New().String()
+	metadata.Tracking_uuid = uuid.New().String()
 	metadata.Region = record.AWSRegion
 
 	payload := avro.NewS3FileCreatedUpdatedPayload()
@@ -79,7 +112,7 @@ func message(record events.S3EventRecord) avro.S3FileCreatedUpdated {
 	payload.Content_length = s3.Object.Size
 	payload.Key = s3.Object.Key
 	payload.Content_type = fileType(s3.Object.Key)
-	payload.Operation_type = s3.Bucket.Name
+	payload.Operation_type = operation
 
 	message := avro.NewS3FileCreatedUpdated()
 	message.Payload = payload
@@ -101,9 +134,12 @@ func schemaIdBytes(topicName string) ([]byte, error) {
 	return schemaIDBytes, nil
 }
 
-func kafkaMessage(payload avro.S3FileCreatedUpdated, schemaIDBytes []byte) kafka.Message {
+func kafkaMessage(payload avro.S3FileCreatedUpdated, schemaIDBytes []byte) (kafka.Message, error) {
 	var buf bytes.Buffer
-	payload.Serialize(&buf)
+	err := payload.Serialize(&buf)
+	if err != nil {
+		return kafka.Message{}, err
+	}
 	valueBytes := buf.Bytes()
 
 	var recordValue []byte
@@ -113,7 +149,7 @@ func kafkaMessage(payload avro.S3FileCreatedUpdated, schemaIDBytes []byte) kafka
 
 	return kafka.Message{
 		Value: recordValue,
-	}
+	}, nil
 }
 
 func fileType(key string) string {
