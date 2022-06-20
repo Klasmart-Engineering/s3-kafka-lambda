@@ -44,7 +44,7 @@
 						"type": "string"
 					},
 					{
-						"name": "tracking_id",
+						"name": "tracking_uuid",
 						"type": "string",
 						"logicalType": "uuid"
 					}

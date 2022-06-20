@@ -26,3 +26,10 @@ Get avro messages from topic
 `clean` removes go build artifacts.
 `local-deploy` starts Red Panda, creates s3 bucket, Red Panda topic, deploys lambda-function (requires `build`) & s3 notification for lambda-function.
 `local-deploy-clean` deletes; s3 bucket, Red Panda topic and lambda-function.
+
+## Operation mapping env
+Provide this env variable bucket to operation type mapping when deploying the lambda
+
+```
+OPERATIONS = "{\"organization\":\"ORGANIZATION\",\"school\":\"SCHOOL\",\"user\":\"USER\",\"class\":\"CLASS\",\"organization-membership\":\"ORGANIZATION_MEMBERSHIP\",\"class-details\":\"CLASS_DETAILS\",\"school-membership\":\"SCHOOL_MEMBERSHIP\",\"class-roster\":\"CLASS_ROSTER\"}
+```

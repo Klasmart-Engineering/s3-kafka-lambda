@@ -23,7 +23,7 @@ type S3FileCreatedUpdated struct {
 	Metadata S3FileCreatedUpdatedMetadata `json:"metadata"`
 }
 
-const S3FileCreatedUpdatedAvroCRC64Fingerprint = "\x1d\xaf\"\xe4\xd0/\x84\xb3"
+const S3FileCreatedUpdatedAvroCRC64Fingerprint = "\x04랇\x14iU\n"
 
 func NewS3FileCreatedUpdated() S3FileCreatedUpdated {
 	r := S3FileCreatedUpdated{}
@@ -75,7 +75,7 @@ func (r S3FileCreatedUpdated) Serialize(w io.Writer) error {
 }
 
 func (r S3FileCreatedUpdated) Schema() string {
-	return "{\"fields\":[{\"name\":\"payload\",\"type\":{\"fields\":[{\"name\":\"key\",\"type\":\"string\"},{\"name\":\"aws_region\",\"type\":\"string\"},{\"name\":\"bucket_name\",\"type\":\"string\"},{\"name\":\"content_length\",\"type\":\"long\"},{\"name\":\"content_type\",\"type\":\"string\"},{\"name\":\"operation_type\",\"type\":\"string\"}],\"name\":\"S3FileCreatedUpdatedPayload\",\"type\":\"record\"}},{\"name\":\"metadata\",\"type\":{\"fields\":[{\"name\":\"origin_application\",\"type\":\"string\"},{\"name\":\"region\",\"type\":\"string\"},{\"logicalType\":\"uuid\",\"name\":\"tracking_id\",\"type\":\"string\"}],\"name\":\"S3FileCreatedUpdatedMetadata\",\"type\":\"record\"}}],\"name\":\"com.kidsloop.S3FileCreatedUpdated\",\"type\":\"record\"}"
+	return "{\"fields\":[{\"name\":\"payload\",\"type\":{\"fields\":[{\"name\":\"key\",\"type\":\"string\"},{\"name\":\"aws_region\",\"type\":\"string\"},{\"name\":\"bucket_name\",\"type\":\"string\"},{\"name\":\"content_length\",\"type\":\"long\"},{\"name\":\"content_type\",\"type\":\"string\"},{\"name\":\"operation_type\",\"type\":\"string\"}],\"name\":\"S3FileCreatedUpdatedPayload\",\"type\":\"record\"}},{\"name\":\"metadata\",\"type\":{\"fields\":[{\"name\":\"origin_application\",\"type\":\"string\"},{\"name\":\"region\",\"type\":\"string\"},{\"logicalType\":\"uuid\",\"name\":\"tracking_uuid\",\"type\":\"string\"}],\"name\":\"S3FileCreatedUpdatedMetadata\",\"type\":\"record\"}}],\"name\":\"com.kidsloop.S3FileCreatedUpdated\",\"type\":\"record\"}"
 }
 
 func (r S3FileCreatedUpdated) SchemaName() string {
